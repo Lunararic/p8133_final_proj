@@ -1,0 +1,33 @@
+---
+title: "rcode"
+author: "Jingwei Ren"
+date: "12/7/2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(survminer)
+library(bayesSurv)
+devtools::install_github('jburos/biostan', build_vignettes = TRUE, dependencies = TRUE)
+library(biostan)
+library(rstan)
+library(bayesplot)
+library(tidybayes)
+```
+
+Descriptive analysis example
+
+```{r}
+data(leukemia, package = "survival")
+leukemia <- as_data_frame(leukemia)
+leukemia
+```
+
+
+stan weibull 
+
+```{r}
+stan_weibull_survival_model_file <- system.file('stan', 'weibull_survival_model.stan', package =  'biostan')
+biostan::print_stan_file(stan_weibull_survival_model_file)
+```
