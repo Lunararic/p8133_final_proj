@@ -24,10 +24,47 @@ leukemia <- as_data_frame(leukemia)
 leukemia
 ```
 
-
 stan weibull 
 
 ```{r}
 stan_weibull_survival_model_file <- system.file('stan', 'weibull_survival_model.stan', package =  'biostan')
 biostan::print_stan_file(stan_weibull_survival_model_file)
+```
+
+
+```{R}
+stan_weibull_survival_model_code <- biostan::read_stan_file(stan_weibull_survival_model_file)
+biostan::print_stan_code(stan_weibull_survival_model_code, section = "data")
+
+stan_weibull_survival_model_data <-
+    list(
+        ## Number of event individuals
+        Nobs = sum(leukemia$status == 1),
+        ## Number of censored individuals
+        Ncen = sum(leukemia$status == 0),
+        ## Number of covariates
+        M_bg = 1,
+        ## Times for event individuals
+        yobs = leukemia$time[leukemia$status == 1],
+        ## Times for censored individuals
+        ycen = leukemia$time[leukemia$status == 0],
+        ## Covariates for event individuals as a matrix
+        Xobs_bg = matrix(as.numeric(leukemia$x == "Maintained")[leukemia$status == 1]),
+        ## Covariates for censored individuals as a matrix
+        Xcen_bg = matrix(as.numeric(leukemia$x == "Maintained")[leukemia$status == 0])
+        )
+stan_weibull_survival_model_data
+
+```
+
+
+```{R}
+stan_weibull_survival_model_fit <-
+    rstan::stan(file = stan_weibull_survival_model_file,
+                data = stan_weibull_survival_model_data)
+```
+
+
+```{R}
+stan_weibull_survival_model_fit
 ```
