@@ -203,3 +203,114 @@ leukemia <- as_data_frame(leukemia)
 leukemia
 
 ```
+
+
+## unparametric model allocation
+
+
+```{r}
+d = leukemia %>%
+  mutate(tobs = time,
+         delta = status,
+         x1 = x)
+
+library(survival)
+library(spBayesSurv)
+library(coda)
+
+###############################################################
+# Independent DDP: Bayesian Nonparametric Survival Model
+###############################################################
+# MCMC parameters
+nburn=500; nsave=500; nskip=0;
+# Note larger nburn, nsave and nskip should be used in practice.
+mcmc=list(nburn=nburn, nsave=nsave, nskip=nskip, ndisplay=1000);
+prior = list(N=4, a0=2, b0=2);
+# Fit the Cox PH model
+res1 = anovaDDP(formula = Surv(tobs, delta)~x1, data=d, 
+                prior=prior, mcmc=mcmc);
+
+allo_list = NULL
+for ( i in 1:500){
+v501= cbind(res1$Tpred, leukemia$x) %>% 
+  as.data.frame() %>% 
+  select(V501)
+
+time2 = cbind(res1$Tpred, leukemia$x) %>% 
+  as.data.frame()
+
+time2 = time2[,i]
+
+time = cbind(time2,v501)
+
+
+weight = res1$w %>%
+  as.data.frame()
+
+weighti = weight[,i]
+
+weightJ = 1/weighti
+
+weight = as.data.frame(cbind(weighti, weightJ))
+
+
+control = time %>%
+  filter(V501 ==1)
+
+a = sum(control$time2>18)/nrow(control)
+
+treat = time %>%
+  filter(V501 ==2)
+
+b = sum(treat$time2 >18)/nrow(treat)
+
+p = ifelse(a > b, a, b)
+
+
+control = time %>%
+  filter(V501 ==1)
+
+c = sum(control$time2 >28)/nrow(control)
+
+treat = time %>%
+  filter(V501 ==2)
+
+d = sum(treat$time2 >28)/nrow(treat)
+
+p2 = ifelse(c>d,c,d)
+
+
+control = time %>%
+  filter(V501 ==1)
+
+c = sum(control$time2 >48)/nrow(control)
+
+treat = time %>%
+  filter(V501 ==2)
+
+d = sum(treat$time2 >48)/nrow(treat)
+
+p3 = ifelse(c>d,c,d)
+
+control = time %>%
+  filter(V501 ==1)
+
+c = sum(control$time2 >58)/nrow(control)
+
+treat = time %>%
+  filter(V501 ==2)
+
+d = sum(treat$time2 >58)/nrow(treat)
+
+p4 = ifelse(c>d,c,d)
+
+
+
+allo = weight[1,1]*p +weight[2,1]*p2 +weight[3,1]*p3 + weight[4,1]*p4
+
+allo_list = c(allo_list,allo)
+}
+
+mean(allo_list)
+
+```
